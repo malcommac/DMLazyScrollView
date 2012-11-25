@@ -80,6 +80,11 @@
 - (void) scrollViewDidScroll:(UIScrollView *)scrollView {
     if (isManualAnimating) return;
     
+    // with two pages only scrollview you can only go forward
+    // (this prevents us to have a glitch with the next UIView (it can't be placed in two positions at the same time)
+    if (self.numberOfPages == 2 && scrollView.contentOffset.x <= (self.frame.size.width*2))
+        [self setContentOffset: CGPointMake((self.frame.size.width*2), 0)];
+    
     NSInteger newPageIndex = currentPage;
     if (scrollView.contentOffset.x <= (self.frame.size.width))
         newPageIndex = [self pageIndexByAdding:-1 from:currentPage];
