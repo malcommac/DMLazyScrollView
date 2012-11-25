@@ -36,6 +36,8 @@ typedef UIViewController*(^DMLazyScrollViewDataSource)(NSUInteger index);
 @property (nonatomic,assign)    NSUInteger                      numberOfPages;
 @property (readonly)            NSUInteger                      currentPage;
 
+- (void) reloadData;
+
 - (void) setPage:(NSInteger) index animated:(BOOL) animated;
 - (void) setPage:(NSInteger) newIndex transition:(DMLazyScrollViewTransition) transition animated:(BOOL) animated;
 - (void) moveByPages:(NSInteger) offset animated:(BOOL) animated;

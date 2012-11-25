@@ -58,8 +58,12 @@
 - (void) setNumberOfPages:(NSUInteger)pages {
     if (pages != numberOfPages) {
         numberOfPages = pages;   
-        [self setCurrentViewController:0];
+        [self reloadData];
     }
+}
+
+- (void) reloadData {
+    [self setCurrentViewController:0];
 }
 
 - (void) layoutSubviews {
