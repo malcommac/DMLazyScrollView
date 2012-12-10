@@ -12,6 +12,11 @@
 @class DMLazyScrollView;
 
 enum {
+    DMLazyScrollViewDirectionHorizontal =   0,
+    DMLazyScrollViewDirectionVertical   =   1,
+};typedef NSUInteger DMLazyScrollViewDirection;
+
+enum {
     DMLazyScrollViewTransitionAuto      =   0,
     DMLazyScrollViewTransitionForward   =   1,
     DMLazyScrollViewTransitionBackward  =   2
@@ -35,6 +40,9 @@ typedef UIViewController*(^DMLazyScrollViewDataSource)(NSUInteger index);
 
 @property (nonatomic,assign)    NSUInteger                      numberOfPages;
 @property (readonly)            NSUInteger                      currentPage;
+@property (readonly)            DMLazyScrollViewDirection       direction;
+
+- (id)initWithFrameAndDirection:(CGRect)frame direction:(DMLazyScrollViewDirection)direction;
 
 - (void) reloadData;
 
