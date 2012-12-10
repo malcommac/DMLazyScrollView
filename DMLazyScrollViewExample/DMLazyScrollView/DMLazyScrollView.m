@@ -26,7 +26,6 @@
 
 - (id)init {
     return [self initWithFrame:CGRectZero];
-    return self;
 }
 
 - (id)initWithFrame:(CGRect)frame
