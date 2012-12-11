@@ -25,16 +25,19 @@
 @synthesize dataSource,controlDelegate;
 
 - (id)init {
-    self = [self initWithFrame:CGRectZero];
-    if (self) {        
-    }
-    return self;
+    return [self initWithFrame:CGRectZero];
 }
 
 - (id)initWithFrame:(CGRect)frame
 {
+    return [self initWithFrameAndDirection:frame direction:DMLazyScrollViewDirectionHorizontal];
+}
+
+- (id)initWithFrameAndDirection:(CGRect)frame direction:(DMLazyScrollViewDirection)direction
+{
     self = [super initWithFrame:frame];
     if (self) {
+        _direction = direction;
         [self initializeControl];
     }
     return self;
@@ -49,7 +52,13 @@
     self.showsVerticalScrollIndicator = NO;
     self.pagingEnabled = YES;
     self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    self.contentSize = CGSizeMake(self.frame.size.width*5.0f, self.frame.size.height);
+    
+    if (_direction == DMLazyScrollViewDirectionHorizontal) {
+        self.contentSize = CGSizeMake(self.frame.size.width*5.0f, self.frame.size.height);
+    } else {
+        self.contentSize = CGSizeMake(self.frame.size.width, self.frame.size.height*5.0f);
+        
+    }
     self.delegate = self;
     
     currentPage = NSNotFound;
@@ -57,7 +66,7 @@
 
 - (void) setNumberOfPages:(NSUInteger)pages {
     if (pages != numberOfPages) {
-        numberOfPages = pages;   
+        numberOfPages = pages;
         [self reloadData];
     }
 }
@@ -77,18 +86,30 @@
     return visibleRect;
 }
 
+- (CGPoint) createPoint:(CGFloat) size {
+    if (_direction == DMLazyScrollViewDirectionHorizontal) {
+        return CGPointMake(size, 0);
+    } else {
+        return CGPointMake(0, size);
+    }
+}
+
 - (void) scrollViewDidScroll:(UIScrollView *)scrollView {
     if (isManualAnimating) return;
     
+    CGFloat offset = (_direction==DMLazyScrollViewDirectionHorizontal) ? scrollView.contentOffset.x : scrollView.contentOffset.y;
+    CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
+    
     // with two pages only scrollview you can only go forward
     // (this prevents us to have a glitch with the next UIView (it can't be placed in two positions at the same time)
-    if (self.numberOfPages == 2 && scrollView.contentOffset.x <= (self.frame.size.width*2))
-        [self setContentOffset: CGPointMake((self.frame.size.width*2), 0)];
+    if (self.numberOfPages == 2 && offset <= (size*2))
+        [self setContentOffset: [self createPoint:size*2]];
     
     NSInteger newPageIndex = currentPage;
-    if (scrollView.contentOffset.x <= (self.frame.size.width))
+    
+    if (offset <= size)
         newPageIndex = [self pageIndexByAdding:-1 from:currentPage];
-    else if (scrollView.contentOffset.x >= (self.frame.size.width*3))
+    else if (offset >= (size*3))
         newPageIndex = [self pageIndexByAdding:+1 from:currentPage];
     
     [self setCurrentViewController:newPageIndex];
@@ -99,19 +120,21 @@
 }
 
 - (void) setCurrentViewController:(NSInteger) index {
-    if (index == currentPage) return; 
+    if (index == currentPage) return;
     currentPage = index;
     
     [self.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     
     NSInteger prevPage = [self pageIndexByAdding:-1 from:currentPage];
     NSInteger nextPage = [self pageIndexByAdding:+1 from:currentPage];
-   
+    
     [self loadControllerAtIndex:prevPage andPlaceAtIndex:-1];   // load previous page
     [self loadControllerAtIndex:index andPlaceAtIndex:0];       // load current page
     [self loadControllerAtIndex:nextPage andPlaceAtIndex:1];   // load next page
     
-    self.contentOffset = CGPointMake(self.frame.size.width*2, 0); // recenter
+    CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
+    
+    self.contentOffset = [self createPoint:size*2.]; // recenter
 }
 
 - (UIViewController *) visibleViewController {
@@ -142,13 +165,16 @@
 }
 
 - (NSInteger) pageIndexByAdding:(NSInteger) offset from:(NSInteger) index {
-    return (numberOfPages+index+(offset%numberOfPages))%numberOfPages;
+    // Complicated stuff with negative modulo
+    while (offset<0) offset += numberOfPages;
+    return (numberOfPages+index+offset) % numberOfPages;
+
 }
 
 - (void) moveByPages:(NSInteger) offset animated:(BOOL) animated {
     NSUInteger finalIndex = [self pageIndexByAdding:offset from:self.currentPage];
     DMLazyScrollViewTransition transition = (offset >= 0 ?  DMLazyScrollViewTransitionForward :
-                                                            DMLazyScrollViewTransitionBackward);
+                                             DMLazyScrollViewTransitionBackward);
     [self setPage:finalIndex transition:transition animated:animated];
 }
 
@@ -167,15 +193,20 @@
             if (newIndex > self.currentPage) transition = DMLazyScrollViewTransitionForward;
             else if (newIndex < self.currentPage) transition = DMLazyScrollViewTransitionBackward;
         }
-    
+        
+        CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
+        
         if (transition == DMLazyScrollViewTransitionForward) {
             if (!isOnePageMove)
                 [self loadControllerAtIndex:newIndex andPlaceAtIndex:2];
-            finalOffset = CGPointMake(self.frame.size.width*(isOnePageMove ? 3 : 4), 0);
+            
+            
+            finalOffset = [self createPoint:(size*(isOnePageMove ? 3 : 4))];
         } else {
             if (!isOnePageMove)
                 [self loadControllerAtIndex:newIndex andPlaceAtIndex:-2];
-            finalOffset = CGPointMake(self.frame.size.width*(isOnePageMove ? 1 : 0), 0);
+            
+            finalOffset = [self createPoint:(size*(isOnePageMove ? 1 : 0))];
         }
         isManualAnimating = YES;
         
@@ -185,8 +216,8 @@
                          animations:^{
                              self.contentOffset = finalOffset;
                          } completion:^(BOOL finished) {
-                            if (!finished) return;
-                            [self setCurrentViewController:newIndex];
+                             if (!finished) return;
+                             [self setCurrentViewController:newIndex];
                              isManualAnimating = NO;
                          }];
     } else {
@@ -201,10 +232,19 @@
 - (UIViewController *) loadControllerAtIndex:(NSInteger) index andPlaceAtIndex:(NSInteger) destIndex {
     UIViewController *viewController = dataSource(index);
     viewController.view.tag = 0;
-    viewController.view.frame = CGRectMake(self.frame.size.width*(destIndex+2),
-                                           0,
-                                           self.frame.size.width,
-                                           self.frame.size.height);
+    
+    if (_direction == DMLazyScrollViewDirectionHorizontal) {
+        viewController.view.frame = CGRectMake(self.frame.size.width*(destIndex+2),
+                                               0,
+                                               self.frame.size.width,
+                                               self.frame.size.height);
+    } else {
+        viewController.view.frame = CGRectMake(0,
+                                               self.frame.size.height*(destIndex+2),
+                                               self.frame.size.width,
+                                               self.frame.size.height);
+        
+    }
     [self addSubview:viewController.view];
     return viewController;
 }
