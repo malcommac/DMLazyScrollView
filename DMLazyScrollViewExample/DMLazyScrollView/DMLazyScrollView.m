@@ -46,7 +46,7 @@ enum {
     self = [super initWithFrame:frame];
     if (self) {
         _direction = direction;
-        circularScrollEnabled = NO;
+        circularScrollEnabled = circularScrolling;
         [self initializeControl];
     }
     return self;
