@@ -1,7 +1,7 @@
 DMLazyScrollView : Lazy Loading UIScrollView (with infinite page scrolling)
 ================
 
-DMLazyScrollView for iOS (with support for infinite scrolling) allows you to create and endless (in horizontal direction) UIScrollView organized in pages and load UIViews dynamically only when needed by reducing time and memory consumption.
+DMLazyScrollView for iOS (with support for infinite scrolling) allows you to create and endless (in both horizontal and vertical direction) UIScrollView organized in pages and load UIViews dynamically only when needed by reducing time and memory consumption.
 
 When you have lots of UIViews to show inside a scroll view you don't want to waste memory and time by creating a big UIScrollView content view, load all subviews at the same time and show them; it does not make sense and it's slow on older devices.
 

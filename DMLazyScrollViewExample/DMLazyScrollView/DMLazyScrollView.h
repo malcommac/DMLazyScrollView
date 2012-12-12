@@ -42,7 +42,10 @@ typedef UIViewController*(^DMLazyScrollViewDataSource)(NSUInteger index);
 @property (readonly)            NSUInteger                      currentPage;
 @property (readonly)            DMLazyScrollViewDirection       direction;
 
-- (id)initWithFrameAndDirection:(CGRect)frame direction:(DMLazyScrollViewDirection)direction;
+
+- (id)initWithFrameAndDirection:(CGRect)frame
+                      direction:(DMLazyScrollViewDirection)direction
+                 circularScroll:(BOOL) circularScrolling;
 
 - (void) reloadData;
 

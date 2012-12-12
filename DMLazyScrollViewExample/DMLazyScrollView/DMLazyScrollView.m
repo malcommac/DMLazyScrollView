@@ -9,12 +9,18 @@
 
 #import "DMLazyScrollView.h"
 
+enum {
+    DMLazyScrollViewScrollDirectionBackward     = 0,
+    DMLazyScrollViewScrollDirectionForward      = 1
+}; typedef NSUInteger DMLazyScrollViewScrollDirection;
+
 #define kDMLazyScrollViewTransitionDuration     0.4
 
 @interface DMLazyScrollView() <UIScrollViewDelegate> {
     NSUInteger      numberOfPages;
     NSUInteger      currentPage;
     BOOL            isManualAnimating;
+    BOOL            circularScrollEnabled;
 }
 
 @end
@@ -30,14 +36,17 @@
 
 - (id)initWithFrame:(CGRect)frame
 {
-    return [self initWithFrameAndDirection:frame direction:DMLazyScrollViewDirectionHorizontal];
+    return [self initWithFrameAndDirection:frame direction:DMLazyScrollViewDirectionHorizontal circularScroll:NO];
 }
 
-- (id)initWithFrameAndDirection:(CGRect)frame direction:(DMLazyScrollViewDirection)direction
-{
+- (id)initWithFrameAndDirection:(CGRect)frame
+                      direction:(DMLazyScrollViewDirection)direction
+                 circularScroll:(BOOL) circularScrolling {
+    
     self = [super initWithFrame:frame];
     if (self) {
         _direction = direction;
+        circularScrollEnabled = NO;
         [self initializeControl];
     }
     return self;
@@ -52,6 +61,7 @@
     self.showsVerticalScrollIndicator = NO;
     self.pagingEnabled = YES;
     self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
+
     
     if (_direction == DMLazyScrollViewDirectionHorizontal) {
         self.contentSize = CGSizeMake(self.frame.size.width*5.0f, self.frame.size.height);
@@ -94,17 +104,52 @@
     }
 }
 
+-(void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate{
+    self.bounces = YES;
+    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidEndDragging:)])
+        [controlDelegate lazyScrollViewDidEndDragging:self];
+}
+
+
+- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewWillBeginDragging:)])
+        [controlDelegate lazyScrollViewWillBeginDragging:self];
+}
+
 - (void) scrollViewDidScroll:(UIScrollView *)scrollView {
     if (isManualAnimating) return;
     
     CGFloat offset = (_direction==DMLazyScrollViewDirectionHorizontal) ? scrollView.contentOffset.x : scrollView.contentOffset.y;
     CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
     
+    
     // with two pages only scrollview you can only go forward
     // (this prevents us to have a glitch with the next UIView (it can't be placed in two positions at the same time)
-    if (self.numberOfPages == 2 && offset <= (size*2))
-        [self setContentOffset: [self createPoint:size*2]];
+    DMLazyScrollViewScrollDirection proposedScroll = (offset <= (size*2) ?
+                                                      DMLazyScrollViewScrollDirectionBackward : // we're moving back
+                                                      DMLazyScrollViewScrollDirectionForward); // we're moving forward
+
+    // you can go back if circular mode is enabled or your current page is not the first page
+    BOOL canScrollBackward = (circularScrollEnabled || (!circularScrollEnabled && self.currentPage != 0));
+    // you can go forward if circular mode is enabled and current page is not the last page
+    BOOL canScrollForward = (circularScrollEnabled || (!circularScrollEnabled && self.currentPage < (self.numberOfPages-1)));
     
+    NSInteger prevPage = [self pageIndexByAdding:-1 from:self.currentPage];
+    NSInteger nextPage = [self pageIndexByAdding:+1 from:self.currentPage];
+    if (prevPage == nextPage) {
+        // This happends when our scrollview have only two and we should have the same prev/next page at left/right
+        // A single UIView instance can't be in two different location at the same moment so we need to place it
+        // loooking at proposed direction
+        [self loadControllerAtIndex:prevPage andPlaceAtIndex:(proposedScroll == DMLazyScrollViewScrollDirectionBackward ? -1 : 1)];
+    }
+
+    if ( (proposedScroll == DMLazyScrollViewScrollDirectionBackward && !canScrollBackward) ||
+         (proposedScroll == DMLazyScrollViewScrollDirectionForward && !canScrollForward)) {
+        self.bounces = NO;
+        [scrollView setContentOffset:[self createPoint:size*2] animated:NO];
+        return;
+    } else self.bounces = YES;
+
     NSInteger newPageIndex = currentPage;
     
     if (offset <= size)
@@ -127,7 +172,7 @@
     
     NSInteger prevPage = [self pageIndexByAdding:-1 from:currentPage];
     NSInteger nextPage = [self pageIndexByAdding:+1 from:currentPage];
-    
+        
     [self loadControllerAtIndex:prevPage andPlaceAtIndex:-1];   // load previous page
     [self loadControllerAtIndex:index andPlaceAtIndex:0];       // load current page
     [self loadControllerAtIndex:nextPage andPlaceAtIndex:1];   // load next page
@@ -212,7 +257,7 @@
         
         [UIView animateWithDuration:kDMLazyScrollViewTransitionDuration
                               delay:0.0
-                            options:UIViewAnimationCurveEaseOut
+                            options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
                              self.contentOffset = finalOffset;
                          } completion:^(BOOL finished) {
@@ -249,10 +294,6 @@
     return viewController;
 }
 
-- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidEndDragging:)])
-        [controlDelegate lazyScrollViewDidEndDragging:self];
-}
 
 - (void)scrollViewWillBeginDecelerating:(UIScrollView *)scrollView {
     if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewWillBeginDecelerating:)])
@@ -262,11 +303,6 @@
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
     if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidEndDecelerating:atPageIndex:)])
         [controlDelegate lazyScrollViewDidEndDecelerating:self atPageIndex:self.currentPage];
-}
-
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
-    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewWillBeginDragging:)])
-        [controlDelegate lazyScrollViewWillBeginDragging:self];
 }
 
 
