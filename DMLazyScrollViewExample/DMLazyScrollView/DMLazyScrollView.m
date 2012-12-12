@@ -46,7 +46,7 @@ enum {
     self = [super initWithFrame:frame];
     if (self) {
         _direction = direction;
-        circularScrollEnabled = circularScrolling;
+        circularScrollEnabled = circularScrollEnabled;
         [self initializeControl];
     }
     return self;
@@ -180,6 +180,9 @@ enum {
     CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
     
     self.contentOffset = [self createPoint:size*2.]; // recenter
+    
+    if ([self.controlDelegate respondsToSelector:@selector(lazyScrollView:currentPageChanged:)])
+        [self.controlDelegate lazyScrollView:self currentPageChanged:self.currentPage];
 }
 
 - (UIViewController *) visibleViewController {

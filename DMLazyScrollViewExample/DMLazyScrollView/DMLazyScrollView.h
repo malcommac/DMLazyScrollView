@@ -29,6 +29,7 @@ enum {
 - (void)lazyScrollViewDidEndDragging:(DMLazyScrollView *)pagingView;
 - (void)lazyScrollViewWillBeginDecelerating:(DMLazyScrollView *)pagingView;
 - (void)lazyScrollViewDidEndDecelerating:(DMLazyScrollView *)pagingView atPageIndex:(NSInteger)pageIndex;
+- (void)lazyScrollView:(DMLazyScrollView *)pagingView currentPageChanged:(NSInteger)currentPageIndex;
 @end
 
 typedef UIViewController*(^DMLazyScrollViewDataSource)(NSUInteger index);
