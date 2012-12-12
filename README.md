@@ -7,7 +7,7 @@ When you have lots of UIViews to show inside a scroll view you don't want to was
 
 DMLazyScrollView allows you to load lazily UIViews and animate page scrolling easily. You can use it to load images or entire views without pain.
 
-![DMLazyScrollView Example Project](http://danielemargutti.com/wp-content/uploads/2012/11/Screenshot-2012.11.25-00.10.18.png)
+![DMLazyScrollView Example Project](http://i.imgur.com/lhmdn.png)
 
 
 ## Donations
