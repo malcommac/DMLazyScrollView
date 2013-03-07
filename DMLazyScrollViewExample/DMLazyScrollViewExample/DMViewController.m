@@ -33,8 +33,10 @@
     // PREPARE LAZY VIEW
     CGRect rect = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height-50);
     lazyScrollView = [[DMLazyScrollView alloc] initWithFrame:rect];
+    
+    __weak __typeof(&*self)weakSelf = self;
     lazyScrollView.dataSource = ^(NSUInteger index) {
-        return [self controllerAtIndex:index];
+        return [weakSelf controllerAtIndex:index];
     };
     lazyScrollView.numberOfPages = numberOfPages;
    // lazyScrollView.controlDelegate = self;
