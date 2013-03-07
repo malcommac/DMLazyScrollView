@@ -60,12 +60,11 @@ enum {
     self.showsVerticalScrollIndicator = NO;
     self.pagingEnabled = YES;
     self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-
     
     if (_direction == DMLazyScrollViewDirectionHorizontal) {
-        self.contentSize = CGSizeMake(self.frame.size.width*5.0f, self.frame.size.height);
+        self.contentSize = CGSizeMake(self.frame.size.width*5.0f, self.contentSize.height);
     } else {
-        self.contentSize = CGSizeMake(self.frame.size.width, self.frame.size.height*5.0f);
+        self.contentSize = CGSizeMake(self.frame.size.width, self.contentSize.height*5.0f);
         
     }
     self.delegate = self;
