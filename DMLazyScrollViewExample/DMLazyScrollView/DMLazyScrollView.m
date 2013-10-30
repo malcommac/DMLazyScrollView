@@ -22,13 +22,16 @@ enum {
     BOOL            isManualAnimating;
     BOOL            circularScrollEnabled;
 }
-
+@property (nonatomic, strong) NSTimer* timer_autoPlay;
 @end
 
 @implementation DMLazyScrollView
 
 @synthesize numberOfPages,currentPage;
 @synthesize dataSource,controlDelegate;
+@synthesize autoPlay = _autoPlay;
+@synthesize timer_autoPlay = _timer_autoPlay;
+@synthesize autoPlayTime = _autoPlayTime;
 
 - (id)init {
     return [self initWithFrame:CGRectZero];
@@ -46,9 +49,80 @@ enum {
     self = [super initWithFrame:frame];
     if (self) {
         _direction = direction;
+        circularScrollEnabled = circularScrolling;
+        _autoPlayTime = 3;
         [self initializeControl];
     }
     return self;
+}
+
+- (void)setAutoPlay:(BOOL)autoPlay
+{
+    _autoPlay = autoPlay;
+    if(self.numberOfPages)
+    {
+        [self reloadData];
+    }
+}
+
+- (void)resetAutoPlay
+{
+    if(_autoPlay)
+    {
+        if(_timer_autoPlay)
+        {
+            [_timer_autoPlay invalidate];
+            _timer_autoPlay = nil;
+        }
+        _timer_autoPlay = [NSTimer scheduledTimerWithTimeInterval:_autoPlayTime target:self selector:@selector(autoPlayHanlde:) userInfo:nil repeats:YES];
+    }
+    else
+    {
+        if(_timer_autoPlay)
+        {
+            [_timer_autoPlay invalidate];
+            _timer_autoPlay = nil;
+        }
+    }
+}
+
+- (void)autoPlayHanlde:(id)timer
+{
+    [self autoPlayGoToNextPage];
+}
+
+- (void)autoPlayGoToNextPage
+{
+    NSInteger nextPage = self.currentPage+1;
+    if(nextPage >= self.numberOfPages)
+    {
+        nextPage = 0;
+    }
+    [self setPage:nextPage animated:YES];
+}
+
+- (void)autoPlayPause
+{
+    if(_timer_autoPlay)
+    {
+        [_timer_autoPlay invalidate];
+        _timer_autoPlay = nil;
+    }
+}
+
+- (void)autoPlayResume
+{
+    [self resetAutoPlay];
+}
+
+- (void)setEnableCircularScroll:(BOOL)circularScrolling
+{
+    circularScrollEnabled = circularScrolling;
+}
+
+- (BOOL)circularScrollEnabled
+{
+    return circularScrollEnabled;
 }
 
 - (void) awakeFromNib {
@@ -81,6 +155,7 @@ enum {
 
 - (void) reloadData {
     [self setCurrentViewController:0];
+    [self resetAutoPlay];
 }
 
 - (void) layoutSubviews {
@@ -106,10 +181,12 @@ enum {
     self.bounces = YES;
     if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidEndDragging:)])
         [controlDelegate lazyScrollViewDidEndDragging:self];
+    [self autoPlayResume];
 }
 
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    [self autoPlayPause];
     if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewWillBeginDragging:)])
         [controlDelegate lazyScrollViewWillBeginDragging:self];
 }
@@ -232,7 +309,7 @@ enum {
     if (newIndex == currentPage) return;
     
     if (animated) {
-        BOOL isOnePageMove = (abs(self.currentPage-newIndex) == 1);
+        //BOOL isOnePageMove = (abs(self.currentPage-newIndex) == 1);
         CGPoint finalOffset;
         
         if (transition == DMLazyScrollViewTransitionAuto) {
@@ -243,16 +320,19 @@ enum {
         CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
         
         if (transition == DMLazyScrollViewTransitionForward) {
-            if (!isOnePageMove)
-                [self loadControllerAtIndex:newIndex andPlaceAtIndex:2];
+            //if (!isOnePageMove)
+                //[self loadControllerAtIndex:newIndex andPlaceAtIndex:2];
+            [self loadControllerAtIndex:newIndex andPlaceAtIndex:1];
             
-            
-            finalOffset = [self createPoint:(size*(isOnePageMove ? 3 : 4))];
+            //finalOffset = [self createPoint:(size*(isOnePageMove ? 3 : 4))];
+            finalOffset = [self createPoint:(size*3)];
         } else {
-            if (!isOnePageMove)
-                [self loadControllerAtIndex:newIndex andPlaceAtIndex:-2];
+            //if (!isOnePageMove)
+                //[self loadControllerAtIndex:newIndex andPlaceAtIndex:-2];
+            [self loadControllerAtIndex:newIndex andPlaceAtIndex:-1];
             
-            finalOffset = [self createPoint:(size*(isOnePageMove ? 1 : 0))];
+            //finalOffset = [self createPoint:(size*(isOnePageMove ? 1 : 0))];
+            finalOffset = [self createPoint:(size*1)];
         }
         isManualAnimating = YES;
         
