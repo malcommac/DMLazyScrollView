@@ -65,6 +65,10 @@ enum {
     }
 }
 
+- (BOOL)hasMultiplePages {
+    return numberOfPages > 1;
+}
+
 - (void)resetAutoPlay
 {
     if(_autoPlay)
@@ -88,7 +92,9 @@ enum {
 
 - (void)autoPlayHanlde:(id)timer
 {
-    [self autoPlayGoToNextPage];
+    if ([self hasMultiplePages]) {
+        [self autoPlayGoToNextPage];
+    }
 }
 
 - (void)autoPlayGoToNextPage
@@ -134,21 +140,22 @@ enum {
     self.showsVerticalScrollIndicator = NO;
     self.pagingEnabled = YES;
     self.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
-    
-    if (_direction == DMLazyScrollViewDirectionHorizontal) {
-        self.contentSize = CGSizeMake(self.frame.size.width*5.0f, self.contentSize.height);
-    } else {
-        self.contentSize = CGSizeMake(self.frame.size.width, self.contentSize.height*5.0f);
-        
-    }
     self.delegate = self;
-    
+    self.contentSize = CGSizeMake(self.frame.size.width, self.contentSize.height);
     currentPage = NSNotFound;
 }
 
 - (void) setNumberOfPages:(NSUInteger)pages {
     if (pages != numberOfPages) {
         numberOfPages = pages;
+        int offset = [self hasMultiplePages] ? numberOfPages + 2 : 1;
+        if (_direction == DMLazyScrollViewDirectionHorizontal) {
+            self.contentSize = CGSizeMake(self.frame.size.width * offset,
+                                          self.contentSize.height);
+        } else {
+            self.contentSize = CGSizeMake(self.frame.size.width,
+                                          self.frame.size.height * offset);
+        }
         [self reloadData];
     }
 }
@@ -247,14 +254,17 @@ enum {
     
     NSInteger prevPage = [self pageIndexByAdding:-1 from:currentPage];
     NSInteger nextPage = [self pageIndexByAdding:+1 from:currentPage];
-        
-    [self loadControllerAtIndex:prevPage andPlaceAtIndex:-1];   // load previous page
-    [self loadControllerAtIndex:index andPlaceAtIndex:0];       // load current page
-    [self loadControllerAtIndex:nextPage andPlaceAtIndex:1];   // load next page
     
+    [self loadControllerAtIndex:index andPlaceAtIndex:0];
+    // Pre-load the content for the adjacent pages if multiple pages are to be displayed
+    if ([self hasMultiplePages]) {
+        [self loadControllerAtIndex:prevPage andPlaceAtIndex:-1];   // load previous page
+        [self loadControllerAtIndex:nextPage andPlaceAtIndex:1];   // load next page
+    }
+
     CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
     
-    self.contentOffset = [self createPoint:size*2.]; // recenter
+    self.contentOffset = [self createPoint:size * ([self hasMultiplePages] ? 2 : 0)]; // recenter
     
     if ([self.controlDelegate respondsToSelector:@selector(lazyScrollView:currentPageChanged:)])
         [self.controlDelegate lazyScrollView:self currentPageChanged:self.currentPage];
@@ -359,18 +369,15 @@ enum {
     UIViewController *viewController = dataSource(index);
     viewController.view.tag = 0;
     
+    CGRect viewFrame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+    int offset = [self hasMultiplePages] ? 2 : 0;
     if (_direction == DMLazyScrollViewDirectionHorizontal) {
-        viewController.view.frame = CGRectMake(self.frame.size.width*(destIndex+2),
-                                               0,
-                                               self.frame.size.width,
-                                               self.frame.size.height);
+        viewFrame = CGRectOffset(viewFrame, self.frame.size.width * (destIndex + offset), 0);
     } else {
-        viewController.view.frame = CGRectMake(0,
-                                               self.frame.size.height*(destIndex+2),
-                                               self.frame.size.width,
-                                               self.frame.size.height);
-        
+        viewFrame = CGRectOffset(viewFrame, 0, self.frame.size.height * (destIndex + offset));
     }
+    viewController.view.frame = viewFrame;
+    
     [self addSubview:viewController.view];
     return viewController;
 }
