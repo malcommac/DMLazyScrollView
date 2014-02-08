@@ -201,7 +201,7 @@ enum {
 - (void) scrollViewDidScroll:(UIScrollView *)scrollView {
     if (isManualAnimating) {
         if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withDirectUserManipulation:)]) {
-            [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withDirectUserManipulation:NO];
+            [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withSelfDrivenAnimation:YES];
         }
         return;
     }
@@ -248,7 +248,7 @@ enum {
     
     // alert delegate
     if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withDirectUserManipulation:)]) {
-        [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withDirectUserManipulation:YES];
+        [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withSelfDrivenAnimation:NO];
     }
     else if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:)]) {
         [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin];
