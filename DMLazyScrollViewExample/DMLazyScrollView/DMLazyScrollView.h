@@ -26,6 +26,7 @@ enum {
 @optional
 - (void)lazyScrollViewWillBeginDragging:(DMLazyScrollView *)pagingView;
 - (void)lazyScrollViewDidScroll:(DMLazyScrollView *)pagingView at:(CGPoint) visibleOffset;
+- (void)lazyScrollViewDidScroll:(DMLazyScrollView *)pagingView at:(CGPoint) visibleOffset withDirectUserManipulation:(BOOL)directManipulation;
 - (void)lazyScrollViewDidEndDragging:(DMLazyScrollView *)pagingView;
 - (void)lazyScrollViewWillBeginDecelerating:(DMLazyScrollView *)pagingView;
 - (void)lazyScrollViewDidEndDecelerating:(DMLazyScrollView *)pagingView atPageIndex:(NSInteger)pageIndex;

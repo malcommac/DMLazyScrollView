@@ -199,7 +199,15 @@ enum {
 }
 
 - (void) scrollViewDidScroll:(UIScrollView *)scrollView {
-    if (isManualAnimating) return;
+    if (isManualAnimating) {
+        if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withDirectUserManipulation:)]) {
+            [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withDirectUserManipulation:NO];
+        }
+        else if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:)]) {
+            [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin];
+        }
+        return;
+    }
     
     CGFloat offset = (_direction==DMLazyScrollViewDirectionHorizontal) ? scrollView.contentOffset.x : scrollView.contentOffset.y;
     CGFloat size =(_direction==DMLazyScrollViewDirectionHorizontal) ? self.frame.size.width : self.frame.size.height;
@@ -242,8 +250,12 @@ enum {
     [self setCurrentViewController:newPageIndex];
     
     // alert delegate
-    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:)])
+    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withDirectUserManipulation:)]) {
+        [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withDirectUserManipulation:YES];
+    }
+    else if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:)]) {
         [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin];
+    }
 }
 
 - (void) setCurrentViewController:(NSInteger) index {
