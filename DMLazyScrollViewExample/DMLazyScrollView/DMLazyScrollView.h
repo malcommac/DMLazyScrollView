@@ -25,7 +25,9 @@ enum {
 @protocol DMLazyScrollViewDelegate <NSObject>
 @optional
 - (void)lazyScrollViewWillBeginDragging:(DMLazyScrollView *)pagingView;
+//Called when it scrolls, except from as the result of self-driven animation.
 - (void)lazyScrollViewDidScroll:(DMLazyScrollView *)pagingView at:(CGPoint) visibleOffset;
+//Called whenever it scrolls: through user manipulation, setup, or self-driven animation.
 - (void)lazyScrollViewDidScroll:(DMLazyScrollView *)pagingView at:(CGPoint) visibleOffset withDirectUserManipulation:(BOOL)directManipulation;
 - (void)lazyScrollViewDidEndDragging:(DMLazyScrollView *)pagingView;
 - (void)lazyScrollViewWillBeginDecelerating:(DMLazyScrollView *)pagingView;

@@ -203,9 +203,6 @@ enum {
         if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withDirectUserManipulation:)]) {
             [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withDirectUserManipulation:NO];
         }
-        else if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:)]) {
-            [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin];
-        }
         return;
     }
     
