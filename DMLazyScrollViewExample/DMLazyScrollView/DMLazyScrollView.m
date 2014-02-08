@@ -200,7 +200,7 @@ enum {
 
 - (void) scrollViewDidScroll:(UIScrollView *)scrollView {
     if (isManualAnimating) {
-        if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withDirectUserManipulation:)]) {
+        if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withSelfDrivenAnimation:)]) {
             [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withSelfDrivenAnimation:YES];
         }
         return;
@@ -247,7 +247,7 @@ enum {
     [self setCurrentViewController:newPageIndex];
     
     // alert delegate
-    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withDirectUserManipulation:)]) {
+    if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:withSelfDrivenAnimation:)]) {
         [controlDelegate lazyScrollViewDidScroll:self at:[self visibleRect].origin withSelfDrivenAnimation:NO];
     }
     else if (nil != controlDelegate && [controlDelegate respondsToSelector:@selector(lazyScrollViewDidScroll:at:)]) {
